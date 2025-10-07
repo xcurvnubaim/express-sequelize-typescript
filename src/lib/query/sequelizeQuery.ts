@@ -109,7 +109,7 @@ export function buildSequelizeQuery(opts: BuildQueryOptions): Pick<FindOptions, 
   }
 
   // ----- sorting -----
-  const defaultOrder: OrderItem[] = opts.defaultOrder ?? [["created_at", "DESC"]];
+  const defaultOrder: OrderItem[] = opts.defaultOrder ?? [];
   let order: OrderItem[] = defaultOrder;
 
   const sort = opts.sort;

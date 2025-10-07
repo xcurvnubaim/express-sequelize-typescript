@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { config } from '../configs';
 
 // Import the database configuration from configs/database.ts
 // Since sequelize-cli requires CommonJS, we need to use require
@@ -15,7 +16,7 @@ module.exports = {
     host: USERConfig.DB_HOST_WRITE,
     port: USERConfig.DB_PORT,
     dialect: USERConfig.DB_DIALECT,
-    logging: console.log,
+    logging: config.logging.level === 'debug' ? console.log : false,
   },
   test: {
     username: USERConfig.DB_USER,
