@@ -1,0 +1,29 @@
+{
+  "name": "sequelize-express-typescript",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.2",
+    "@types/validator": "^13.15.3",
+    "sequelize-cli": "^6.6.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.899.0",
+    "@aws-sdk/lib-storage": "^3.899.0",
+    "@aws-sdk/s3-request-presigner": "^3.899.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jose": "^6.1.0",
+    "mysql2": "^3.15.1",
+    "reflect-metadata": "^0.2.2",
+    "sequelize": "^6.37.7",
+    "sequelize-typescript": "^2.1.6",
+    "tsyringe": "^4.10.0",
+    "zod": "^4.1.11"
+  }
+}
