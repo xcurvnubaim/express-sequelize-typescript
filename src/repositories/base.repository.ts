@@ -47,4 +47,12 @@ export abstract class BaseRepository<T extends Model<T>> {
             where: { id } as WhereOptions<T> 
         });
     }
+
+    async count(options?: FindOptions<T>): Promise<number> {
+        return this.model.count(options);
+    }
+
+    async findAndCountAll(options: FindOptions<T>): Promise<{ rows: T[]; count: number }> {
+        return this.model.findAndCountAll(options);
+    }
 }

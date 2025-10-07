@@ -1,30 +1,30 @@
-import { ApiError, ApiErrorClass } from './error';
+import { ApiErrorClass } from '../errors/api-error';
+import type { StackFrame } from '../errors/stack-utils';
 
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
+  meta?: Record<string, unknown>;
   data: T | null;
-  error: ApiError | null;
-  errorStack?: ApiError[];
+  error: StackFrame[] | null;
 }
 
-export const successResponse = <T>(message: string, data?: T): ApiResponse<T> => {
+export const successResponse = <T>(message: string, data?: T, meta?: Record<string, unknown>): ApiResponse<T> => {
   return {
     success: true,
     message,
+    meta,
     data: data !== undefined ? data : null,
     error: null,
   };
 };
 
 export const errorResponse = (message: string, error: ApiErrorClass | null): ApiResponse<null> => {
-  const errorStack = error instanceof ApiErrorClass ? error.getErrorChain() : undefined;
-
+  const includeFramesDefault = process.env.NODE_ENV !== "production";
   return {
     success: false,
     message,
     data: null,
-    error,
-    errorStack,
+    error: error?.toJSON(includeFramesDefault).stackFrames || null,
   };
 };

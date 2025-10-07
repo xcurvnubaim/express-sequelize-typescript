@@ -8,7 +8,6 @@ export function createPostRoutes(): Router {
     const postController = container.resolve<PostController>(TOKENS.PostController);
 
     router.get('/', postController.getPosts);
-    router.get('/with-user', postController.getPostsWithUser);
     router.get('/:id', postController.getPostById);
     router.get('/user/:userId', postController.getPostsByUserId);
     router.post('/', postController.createPost);

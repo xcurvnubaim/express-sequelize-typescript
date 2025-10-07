@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodType, ZodError } from 'zod';
-import { ApiErrorClass } from '../lib/app/error';
+import { ApiErrorClass } from '../lib/errors/api-error';
 import { errorResponse } from '../lib/app/response';
 
 /**

@@ -20,7 +20,7 @@ export const newDB = (config: DatabaseConfig) => {
           host: config.DB_HOST_WRITE,
         },
       },
-      logging: false,
+      logging: true,
       pool: {
         max: 10,
         min: 1,

@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
-import { Sequelize } from "sequelize-typescript";
 import { config } from "../../../configs";
 import { newDB } from "./db";
 import { TOKENS } from "./di-tokens";
@@ -10,16 +9,23 @@ import { UserService } from "../../services/user.service";
 import { PostService } from "../../services/post.service";
 import { UserController } from "../../controllers/user.controller";
 import { PostController } from "../../controllers/post.controller";
-import { User } from "../../models/user.model";
+import { createLogger } from "./logger";
 
 /**
  * Initialize the dependency injection container
  * This should be called once at application startup
  */
 export function initializeContainer(): void {
+    // Register Logger first (other services might need it)
+    const logger = createLogger(config.logging);
+    container.registerInstance(TOKENS.Logger, logger);
+
     // Register Sequelize instance as singleton
-    const db = newDB(config.databases["user"]);
-    container.registerInstance(TOKENS.Sequelize, db);
+    const dbUser = newDB(config.databases["user"]);
+    // const dbPost = newDB(config.databases["post"]);
+
+    container.registerInstance(TOKENS.SequelizeUser, dbUser);
+    // container.registerInstance(TOKENS.SequelizePost, dbPost);
     
     // Register repositories
     container.register(TOKENS.UserRepository, { useClass: UserRepository });

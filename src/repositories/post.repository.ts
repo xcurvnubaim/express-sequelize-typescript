@@ -8,7 +8,7 @@ import { User } from "../models/user.model";
 
 @injectable()
 export class PostRepository extends BaseRepository<Post> {
-  constructor(@inject(TOKENS.Sequelize) sequelize: Sequelize) {
+  constructor(@inject(TOKENS.SequelizeUser) sequelize: Sequelize) {
     super(Post, sequelize);
   }
 

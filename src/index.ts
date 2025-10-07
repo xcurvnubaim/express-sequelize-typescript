@@ -1,18 +1,18 @@
-import "./lib/app/reflect-metadata"; // Import this first
+import "reflect-metadata";
 import express from "express";
 import { config } from "../configs";
-import { initializeContainer } from "./lib/app/di-container";
-import { createLogger } from "./lib/app/logger";
+import { container, initializeContainer, TOKENS } from "./lib/app/di-container";
+
 import { createUserRoutes } from "./routes/users.route";
 import { createPostRoutes } from "./routes/posts.route";
-import { globalErrorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { globalErrorHandler, notFoundHandler } from "./lib/errors/errorHandler";
+import type { Logger } from "./lib/app/logger";
 
-const logger = createLogger(config.logging);
-
+initializeContainer();
+const logger = container.resolve<Logger>(TOKENS.Logger);
 logger.info("App starting", { env: process.env.APP_ENV || "development" });
 
 // Initialize the DI container
-initializeContainer();
 logger.info("Dependency injection container initialized");
 
 // Create Express app

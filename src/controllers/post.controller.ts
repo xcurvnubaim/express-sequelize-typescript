@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { BaseController } from './base.controller';
 import { PostService } from '../services/post.service';
 import { TOKENS } from '../lib/app/di-tokens';
+import { parseQueryFromRequest } from '../lib/query/queryBuilder';
+import { validateQueryParams, type ValidateFields } from '../lib/query/queryValidator';
 
 @injectable()
 export class PostController extends BaseController {
@@ -14,13 +16,24 @@ export class PostController extends BaseController {
     }
 
     getPosts = this.asyncHandler(async (req: Request, res: Response) => {
-        const posts = await this.postService.getAllPosts();
-        this.sendSuccess(res, posts);
-    });
+        const baseOpts = parseQueryFromRequest(req);
 
-    getPostsWithUser = this.asyncHandler(async (req: Request, res: Response) => {
-        const posts = await this.postService.getAllPostsWithUser();
-        this.sendSuccess(res, posts);
+        const rules: ValidateFields = {
+            sortColumns: ['id', 'title', 'createdAt', 'updatedAt'],
+            sortDir: ['asc', 'desc'],
+            filters: [
+                { field: 'title', allow: { contains: true } },
+                { field: 'userId', allow: { equals: true } },
+                { field: 'createdAt', allow: { range: { gte: true, lte: true } } },
+            ],
+            searchColumns: ['title', 'body'],
+            maxPageSize: 100
+        };
+
+        validateQueryParams(baseOpts, rules);
+
+        const posts = await this.postService.getAllPosts(baseOpts);
+        this.sendSuccess(res, posts.data, 200, posts.meta);
     });
 
     getPostById = this.asyncHandler(async (req: Request, res: Response) => {

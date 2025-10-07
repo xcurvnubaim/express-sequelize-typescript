@@ -13,9 +13,10 @@ export abstract class BaseController {
     /**
      * Send a success response
      */
-    protected sendSuccess(res: Response, data: any, statusCode: number = 200) {
+    protected sendSuccess(res: Response, data: any, statusCode: number = 200, meta?: Record<string, unknown>) {
         res.status(statusCode).json({
             success: true,
+            meta,
             data
         });
     }
