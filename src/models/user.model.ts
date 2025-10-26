@@ -52,6 +52,7 @@ export class User extends Model {
   // Method Definition
   toResponseDto(): UserResponseDto {
     return {
+      id: this.id,
       name: this.name,
       email: this.email,
     };

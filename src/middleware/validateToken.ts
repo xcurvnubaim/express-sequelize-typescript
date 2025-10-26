@@ -1,8 +1,9 @@
-import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { errorResponse } from '../lib/response';
-import { RequestWithAuth, UserTokenPayload } from '../types/interfaces';
+import type { PayloadToken, RequestWithAuth } from '../types/interfaces';
+import type { NextFunction, Response } from 'express';
+import { errorResponse } from '../lib/internal/response';
+import { config } from '../../configs';
 
 export const verifyToken = (req: RequestWithAuth, res: Response, next: NextFunction) => {
   const token = req.headers.authorization;
@@ -14,8 +15,8 @@ export const verifyToken = (req: RequestWithAuth, res: Response, next: NextFunct
     const [, tokenValue] = token.split(' ');
     const user = jwt.verify(
       tokenValue,
-      process.env.SECRET_KEY || 'secret'
-    ) as unknown as UserTokenPayload;
+      config.app.SECRET_KEY || 'secret'
+    ) as unknown as PayloadToken;
     req.user = user;
     next();
   } catch {

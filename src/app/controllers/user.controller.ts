@@ -5,6 +5,7 @@ import { UserService } from '../services/user.service';
 import { TOKENS } from '../../lib/internal/di-tokens';
 import { parseRequest } from '../../lib/internal/request';
 import { LoginUserSchema, RegisterUserSchema } from '../dtos/user.dto';
+import type { RequestWithAuth } from '../../types/interfaces';
 
 @injectable()
 export class UserController extends BaseController {
@@ -12,9 +13,22 @@ export class UserController extends BaseController {
     super();
   }
 
+  getMe = this.asyncHandler(async (req: RequestWithAuth, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return this.sendError(res, 'Unauthorized', 401);
+    }
+
+    const user = await this.userService.getUserById(userId);
+    if (!user) {
+      return this.sendError(res, 'User not found', 404);
+    }
+
+    this.sendSuccess(res, user);
+  });
+
   getUserById = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-
     if (!id || isNaN(Number(id))) {
       return this.sendError(res, 'Invalid user ID', 400);
     }

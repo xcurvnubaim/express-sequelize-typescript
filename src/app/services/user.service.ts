@@ -2,7 +2,6 @@ import { injectable, inject } from 'tsyringe';
 import { BaseService } from './base.service';
 import { UserRepository } from '../repositories/user.repository';
 import { TOKENS } from '../../lib/internal/di-tokens';
-import { User } from '../../models/user.model';
 import type {
   LoginUserRequestDto,
   LoginUserResponseDto,
@@ -30,8 +29,9 @@ export class UserService extends BaseService {
     return Bun.password.verify(password, hashedPassword);
   }
 
-  async getUserById(id: number): Promise<User | null> {
-    return this.userRepository.findById(id);
+  async getUserById(id: number): Promise<UserResponseDto | null> {
+    const user = await this.userRepository.findById(id);
+    return user ? user.toResponseDto() : null;
   }
 
   async registerUser(data: RegisterUserRequestDto): Promise<UserResponseDto> {

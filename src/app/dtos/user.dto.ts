@@ -9,6 +9,7 @@ export const RegisterUserSchema = z.object({
 export type RegisterUserRequestDto = z.infer<typeof RegisterUserSchema>;
 
 export type UserResponseDto = {
+  id: number;
   email: string;
   name: string | null;
 };
