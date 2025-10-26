@@ -1,19 +1,19 @@
-import "reflect-metadata";
-import express from "express";
-import { config } from "../configs";
-import { container, initializeContainer, TOKENS } from "./lib/app/di-container";
+import 'reflect-metadata';
+import express from 'express';
+import { config } from '../configs';
+import { container, initializeContainer, TOKENS } from './lib/internal/di-container';
 
-import { createUserRoutes } from "./routes/users.route";
-import { createPostRoutes } from "./routes/posts.route";
-import { globalErrorHandler, notFoundHandler } from "./lib/errors/errorHandler";
-import type { Logger } from "./lib/app/logger";
+import { createUserRoutes } from './routes/users.route';
+import { createPostRoutes } from './routes/posts.route';
+import { globalErrorHandler, notFoundHandler } from './lib/errors/errorHandler';
+import type { Logger } from './lib/internal/logger';
 
 initializeContainer();
 const logger = container.resolve<Logger>(TOKENS.Logger);
-logger.info("App starting", { env: process.env.APP_ENV || "development" });
+logger.info('App starting', { env: process.env.APP_ENV || 'development' });
 
 // Initialize the DI container
-logger.info("Dependency injection container initialized");
+logger.info('Dependency injection container initialized');
 
 // Create Express app
 const app = express();
@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint (before other routes)
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // API Routes
@@ -40,7 +40,7 @@ app.use(globalErrorHandler);
 // Start server
 const PORT = config.app.PORT || 3000;
 app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 });
 
 export default app;

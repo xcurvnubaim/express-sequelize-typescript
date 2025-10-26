@@ -1,17 +1,16 @@
 import { Router } from 'express';
-import { container } from '../lib/app/di-container';
-import { TOKENS } from '../lib/app/di-container';
-import { UserController } from '../controllers/user.controller';
+import { container } from '../lib/internal/di-container';
+import { TOKENS } from '../lib/internal/di-container';
+import { UserController } from '../app/controllers/user.controller';
 
 export function createUserRoutes(): Router {
-    const router = Router();
-    const userController = container.resolve<UserController>(TOKENS.UserController);
+  const router = Router();
+  const userController = container.resolve<UserController>(TOKENS.UserController);
 
-    router.get('/', userController.getUsers);
-    router.get('/:id', userController.getUserById);
-    router.post('/', userController.createUser);
-    router.put('/:id', userController.updateUser);
-    router.delete('/:id', userController.deleteUser);
+  // router.get('/', userController.getUsers);
+  router.get('/:id', userController.getUserById);
+  router.post('/login', userController.loginUser);
+  router.post('/register', userController.registerUser);
 
-    return router;
+  return router;
 }

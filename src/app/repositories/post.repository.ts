@@ -1,10 +1,10 @@
-import { Sequelize } from "sequelize-typescript";
-import { injectable, inject } from "tsyringe";
-import { Post } from "../models/post.model";
-import { BaseRepository } from "./base.repository";
-import { Op } from "sequelize";
-import { TOKENS } from "../lib/app/di-tokens";
-import { User } from "../models/user.model";
+import { Sequelize } from 'sequelize-typescript';
+import { injectable, inject } from 'tsyringe';
+import { Post } from '../../models/post.model';
+import { BaseRepository } from './base.repository';
+import { Op } from 'sequelize';
+import { TOKENS } from '../../lib/internal/di-tokens';
+import { User } from '../../models/user.model';
 
 @injectable()
 export class PostRepository extends BaseRepository<Post> {

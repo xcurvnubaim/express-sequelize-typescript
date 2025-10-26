@@ -73,7 +73,12 @@ export class S3Storage implements Storage {
     if (asReadable || (Buffer.isBuffer(body) && body.byteLength > this.multipartCfg.partSize)) {
       const uploader = new Upload({
         client: this.s3,
-        params: { Bucket: this.bucket, Key: key, Body: body as any, ContentType: contentType },
+        params: {
+          Bucket: this.bucket,
+          Key: key,
+          Body: body as Buffer | Uint8Array | Readable | string,
+          ContentType: contentType,
+        },
         partSize: this.multipartCfg.partSize,
         queueSize: this.multipartCfg.queueSize,
         leavePartsOnError: false,
@@ -86,9 +91,9 @@ export class S3Storage implements Storage {
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        Body: body as any,
+        Body: body as Buffer | Uint8Array | string,
         ContentType: contentType,
-      }),
+      })
     );
   }
 
@@ -105,8 +110,8 @@ export class S3Storage implements Storage {
     // In Node18+, body is already a Readable
     if (body instanceof Readable) return body;
     // Fallback for edge cases
-    // @ts-ignore
-    return Readable.fromWeb?.(body as any) ?? (body as Readable);
+    // @ts-expect-error Readable.fromWeb may not exist
+    return Readable.fromWeb?.(body as unknown) ?? (body as Readable);
   }
 
   async getSignedUrl(key: string, expiresInSec?: number): Promise<string> {
@@ -124,14 +129,14 @@ export class S3Storage implements Storage {
           Bucket: this.bucket,
           Prefix: prefix,
           ContinuationToken: token,
-        }),
+        })
       );
       out.push(
         ...(res.Contents ?? []).map((o: S3Object) => ({
-          key: o.Key!,
+          key: o.Key || '',
           size: o.Size,
           lastModified: o.LastModified ? new Date(o.LastModified) : undefined,
-        })),
+        }))
       );
       token = res.IsTruncated ? res.NextContinuationToken : undefined;
     } while (token);
@@ -148,7 +153,7 @@ export class S3Storage implements Storage {
       new DeleteObjectsCommand({
         Bucket: this.bucket,
         Delete: { Objects: keys.map((Key) => ({ Key })) },
-      }),
+      })
     );
   }
 }

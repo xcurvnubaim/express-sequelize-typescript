@@ -3,8 +3,8 @@ import { jwtVerify, createRemoteJWKSet, type JWTPayload } from 'jose';
 const SECURETOKEN_JWKS = createRemoteJWKSet(
   // JWKS endpoint equivalent to the x509 list from the docs
   new URL(
-    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
-  ),
+    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'
+  )
 );
 
 export interface FirebaseIdPayload extends JWTPayload {
@@ -25,7 +25,7 @@ export interface FirebaseIdPayload extends JWTPayload {
  */
 export async function verifyFirebaseIdToken(
   idToken: string,
-  projectId: string,
+  projectId: string
 ): Promise<FirebaseIdPayload> {
   // jose will fetch the JWKS, pick by `kid`, verify RS256 signature, and cache keys.
   const { payload } = await jwtVerify(idToken, SECURETOKEN_JWKS, {

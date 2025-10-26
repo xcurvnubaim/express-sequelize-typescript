@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodType, ZodError } from 'zod';
 import { ApiErrorClass } from '../lib/errors/api-error';
-import { errorResponse } from '../lib/app/response';
+import { errorResponse } from '../lib/internal/response';
 
 /**
  * Validation options for request validation
@@ -14,20 +14,20 @@ interface ValidationOptions {
 
 /**
  * Middleware factory for validating request data using Zod schemas
- * 
+ *
  * @param options - Object containing Zod schemas for body, params, and/or query
  * @returns Express middleware function
- * 
+ *
  * @example
  * ```typescript
  * import { z } from 'zod';
- * 
+ *
  * const userSchema = z.object({
  *   name: z.string().min(1),
  *   email: z.string().email(),
  *   age: z.number().min(0).optional()
  * });
- * 
+ *
  * router.post('/users', validate({ body: userSchema }), createUser);
  * ```
  */
@@ -60,7 +60,7 @@ export const validate =
       if (error instanceof ZodError) {
         // Format Zod validation errors into user-friendly messages
         const messages = error.issues.map(
-          (err) => `${err.path.join('.')} ${err.message.toLowerCase()}`,
+          (err) => `${err.path.join('.')} ${err.message.toLowerCase()}`
         );
 
         const message = `Validation error: ${messages.join(', ')}`;

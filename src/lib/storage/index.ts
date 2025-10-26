@@ -47,8 +47,6 @@ class StorageService {
     this.storage = createStorage(storageOptions);
     await this.storage.ensureReady();
     this.isInitialized = true;
-
-    console.warn(`Storage initialized: ${storageOptions.kind}`);
   }
 
   public getStorage(): Storage {

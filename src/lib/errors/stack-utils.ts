@@ -1,9 +1,9 @@
-import path from "node:path";
+import path from 'node:path';
 
 export type StackFrame = {
   fn?: string;
-  file?: string;     // baseDir-stripped
-  absFile?: string;  // non-enumerable
+  file?: string; // baseDir-stripped
+  absFile?: string; // non-enumerable
   line?: number;
   column?: number;
   nodeInternal?: boolean;
@@ -13,9 +13,11 @@ export type StackFrame = {
 export type StackOptions = {
   baseDir?: string;
   includeNodeInternals?: boolean; // default false
-  includeNodeModules?: boolean;   // default true
-  maxFrames?: number;             // default 20
-  trimThisConstructor?: Function;
+  includeNodeModules?: boolean; // default true
+  maxFrames?: number; // default 20
+  // A function or constructor used to exclude frames up to this point when capturing stack traces
+  // Avoid `Function` type per eslint: no-unsafe-function-type
+  trimThisConstructor?: ((...args: unknown[]) => unknown) | (new (...args: unknown[]) => unknown);
 };
 
 export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[] {
@@ -32,14 +34,18 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
     if (!err.stack) Error.captureStackTrace?.(err, opts.trimThisConstructor as any);
     const maybeSites = (err as any).stack;
     if (Array.isArray(maybeSites)) sites = maybeSites;
-  } catch {}
+  } catch {
+    // Intentionally ignore structured stack parsing failures
+    void 0;
+  }
   (Error as any).prepareStackTrace = old;
 
   if (sites && sites.length) {
     const out: StackFrame[] = [];
     for (const s of sites) {
       const abs: string | undefined = s.getFileName?.() || s.getScriptNameOrSourceURL?.();
-      const isInternal = !abs || abs.startsWith("node:") || abs.includes(`${path.sep}internal${path.sep}`);
+      const isInternal =
+        !abs || abs.startsWith('node:') || abs.includes(`${path.sep}internal${path.sep}`);
       if (isInternal && !includeNodeInternals) continue;
 
       const isNM = !!abs && abs.includes(`${path.sep}node_modules${path.sep}`);
@@ -53,7 +59,7 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
         nodeInternal: isInternal,
         nodeModule: isNM,
       };
-      if (abs) defineHidden(frame, "absFile", abs);
+      if (abs) defineHidden(frame, 'absFile', abs);
       out.push(frame);
       if (out.length >= maxFrames) break;
     }
@@ -61,7 +67,7 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
   }
 
   // Fallback: parse string stack (Bun, non-V8)
-  const stackStr = String(err.stack ?? "");
+  const stackStr = String(err.stack ?? '');
   const lines = stackStr.split(/\r?\n/).slice(1); // skip "Error: msg"
   const frames: StackFrame[] = [];
 
@@ -74,10 +80,10 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
     const m = re.exec(line);
     if (!m) continue;
     const fn = m.groups?.fn?.trim();
-    const loc = m.groups?.loc?.trim() ?? "";
+    const loc = m.groups?.loc?.trim() ?? '';
 
     // Extract file:line:column (strip URL prefixes)
-    const cleaned = loc.replace(/^file:\/\//, "");
+    const cleaned = loc.replace(/^file:\/\//, '');
     const match = /(.+?):(\d+):(\d+)$/.exec(cleaned);
     if (!match) continue;
 
@@ -86,9 +92,9 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
     const colNo = Number(match[3]);
 
     const isInternal =
-      abs.startsWith("node:") ||
+      abs.startsWith('node:') ||
       abs.includes(`${path.sep}internal${path.sep}`) ||
-      abs === "<anonymous>";
+      abs === '<anonymous>';
     if (isInternal && !includeNodeInternals) continue;
 
     const isNM = abs.includes(`${path.sep}node_modules${path.sep}`);
@@ -102,7 +108,7 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
       nodeInternal: isInternal,
       nodeModule: isNM,
     };
-    defineHidden(frame, "absFile", abs);
+    defineHidden(frame, 'absFile', abs);
     frames.push(frame);
     if (frames.length >= maxFrames) break;
   }
@@ -112,7 +118,7 @@ export function getStackFrames(err: Error, opts: StackOptions = {}): StackFrame[
 
 function toRelative(abs: string, baseDir: string): string {
   const rel = path.relative(baseDir, abs);
-  return rel && !rel.startsWith("..") ? rel : abs;
+  return rel && !rel.startsWith('..') ? rel : abs;
 }
 function defineHidden(obj: object, key: string, value: unknown) {
   Object.defineProperty(obj, key, { value, enumerable: false });

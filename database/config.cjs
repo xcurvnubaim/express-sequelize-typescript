@@ -11,7 +11,7 @@ module.exports = {
     host: process.env.DB_HOST_WRITE_USER || 'localhost',
     port: Number(process.env.DB_PORT_USER) || 3306,
     dialect: 'mysql',
-    logging: console.log,
+    logging: false,
   },
   test: {
     username: process.env.DB_USER_USER || 'user',

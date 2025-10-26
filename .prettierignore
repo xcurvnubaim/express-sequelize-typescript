@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+*.log
+.env
+coverage
+*.config.js
+database/migrations
+database/seeders

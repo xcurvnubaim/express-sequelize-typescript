@@ -14,7 +14,7 @@ export const verifyToken = (req: RequestWithAuth, res: Response, next: NextFunct
     const [, tokenValue] = token.split(' ');
     const user = jwt.verify(
       tokenValue,
-      process.env.SECRET_KEY || 'secret',
+      process.env.SECRET_KEY || 'secret'
     ) as unknown as UserTokenPayload;
     req.user = user;
     next();

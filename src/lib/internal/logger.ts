@@ -1,7 +1,16 @@
-import fs from "fs";
-import path from "path";
-import { createRequire } from "module";
-import { logging, type ChannelName, type ConsoleChannelCfg, type FileChannelCfg, type LoggingConfig, type LogLevel, type NewRelicChannelCfg, type SentryChannelCfg } from "../../../configs/logging";
+import fs from 'fs';
+import path from 'path';
+import { createRequire } from 'module';
+import {
+  logging,
+  type ChannelName,
+  type ConsoleChannelCfg,
+  type FileChannelCfg,
+  type LoggingConfig,
+  type LogLevel,
+  type NewRelicChannelCfg,
+  type SentryChannelCfg,
+} from '../../../configs/logging';
 const require = createRequire(import.meta.url);
 
 // Minimal interface, Laravel-like API
@@ -20,23 +29,43 @@ function shouldLog(current: LogLevel, messageLevel: LogLevel) {
   return levelToNumber[messageLevel] >= levelToNumber[current];
 }
 
-function safeStringify(obj: any): string {
-  try {
-    return typeof obj === "string" ? obj : JSON.stringify(obj);
-  } catch {
-    return String(obj);
-  }
-}
-
 function errorToString(e: Error): string {
   return `${e.name}: ${e.message}`;
 }
 
-function formatLine(level: LogLevel, msg: string | Error, ctx?: any) {
-  const iso = new Date().toISOString();
-  const str = msg instanceof Error ? errorToString(msg) : String(msg);
-  const context = ctx ? ` ${safeStringify(ctx)}` : "";
-  return `${iso} [${level.toUpperCase()}] ${str}${context}`;
+function getCallerInfo(): string {
+  const stack = new Error().stack;
+  if (!stack) return '';
+
+  const lines = stack.split('\n');
+  // Skip frames: Error, getCallerInfo, formatLine, adapter.log, base.log, api.info/error/etc
+  // Line 6 or 7 is usually the actual caller
+  let callerLine = lines[6];
+
+  // Fallback if frame 6 doesn't exist
+  if (!callerLine && lines[5]) callerLine = lines[5];
+  if (!callerLine && lines[4]) callerLine = lines[4];
+
+  if (!callerLine) return '';
+
+  const match = callerLine.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)|at\s+(.+?):(\d+):(\d+)/);
+  if (!match) return '';
+
+  const functionName = match[1] || 'anonymous';
+  const file = match[2] || match[5];
+  const line = match[3] || match[6];
+
+  const fileName = file ? file.split('/').pop() : '';
+  const cleanFunctionName = functionName.split('.').pop() || functionName;
+  return `fn: ${cleanFunctionName} (${fileName}:${line})`;
+}
+
+function formatLine(level: LogLevel, message: string | Error, context?: any): string {
+  const timestamp = new Date().toISOString();
+  const caller = getCallerInfo();
+  const messageStr = message instanceof Error ? errorToString(message) : message;
+  const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+  return `[${timestamp}] [${level}] [${caller}] ${messageStr}${contextStr}`;
 }
 
 class ConsoleAdapter {
@@ -44,22 +73,23 @@ class ConsoleAdapter {
   log(level: LogLevel, message: string | Error, context?: any) {
     if (!shouldLog(this.level, level)) return;
     const baseCtx =
-      message instanceof Error && message.stack
-        ? { ...context, stack: message.stack }
-        : context;
+      message instanceof Error && message.stack ? { ...context, stack: message.stack } : context;
     const line = formatLine(level, message, baseCtx);
-    if (level === "error") console.error(line);
-    else if (level === "warn") console.warn(line);
+    if (level === 'error') console.error(line);
+    else if (level === 'warn') console.warn(line);
     else console.log(line);
   }
 }
 
 class FileAdapter {
   private stream: fs.WriteStream;
-  constructor(private level: LogLevel, private filePath: string) {
+  constructor(
+    private level: LogLevel,
+    private filePath: string
+  ) {
     const dir = path.dirname(filePath);
     fs.mkdirSync(dir, { recursive: true });
-    this.stream = fs.createWriteStream(filePath, { flags: "a" });
+    this.stream = fs.createWriteStream(filePath, { flags: 'a' });
   }
   log(level: LogLevel, message: string | Error, context?: any) {
     if (!shouldLog(this.level, level)) return;
@@ -67,18 +97,21 @@ class FileAdapter {
       message instanceof Error && (message as Error).stack
         ? { ...context, stack: (message as Error).stack }
         : context;
-    this.stream.write(formatLine(level, message, baseCtx) + "\n");
+    this.stream.write(formatLine(level, message, baseCtx) + '\n');
   }
 }
 
 class SentryAdapter {
   private sentry: any | undefined;
   private inited = false;
-  constructor(private level: LogLevel, private cfg: SentryChannelCfg) {
+  constructor(
+    private level: LogLevel,
+    private cfg: SentryChannelCfg
+  ) {
     if (!cfg.enabled || !cfg.dsn) return;
     try {
       // Dynamically import so it's optional
-      this.sentry = require("@sentry/node");
+      this.sentry = require('@sentry/node');
       this.sentry.init({
         dsn: cfg.dsn,
         environment: cfg.environment,
@@ -91,7 +124,7 @@ class SentryAdapter {
   }
   log(level: LogLevel, message: string | Error, context?: any) {
     if (!this.inited || !shouldLog(this.level, level)) return;
-    if (level === "error") {
+    if (level === 'error') {
       const err = message instanceof Error ? message : new Error(String(message));
       this.sentry.captureException(err, { extra: context });
     } else {
@@ -105,22 +138,25 @@ class SentryAdapter {
 
 class NewRelicAdapter {
   private nr: any | undefined;
-  constructor(private level: LogLevel, private cfg: NewRelicChannelCfg) {
+  constructor(
+    private level: LogLevel,
+    private cfg: NewRelicChannelCfg
+  ) {
     if (!cfg.enabled) return;
     try {
       // The New Relic Node agent patches global; importing "newrelic" returns the API
-      this.nr = require("newrelic");
+      this.nr = require('newrelic');
     } catch {
       // not installed; ignore
     }
   }
   log(level: LogLevel, message: string | Error, context?: any) {
     if (!this.nr || !shouldLog(this.level, level)) return;
-    const attrs = context && typeof context === "object" ? context : { context };
-    if (level === "error") {
+    const attrs = context && typeof context === 'object' ? context : { context };
+    if (level === 'error') {
       this.nr.noticeError(new Error(String(message)), attrs);
     } else {
-      this.nr.recordCustomEvent("Log", {
+      this.nr.recordCustomEvent('Log', {
         level,
         message: message instanceof Error ? errorToString(message) : String(message),
         ...attrs,
@@ -136,24 +172,33 @@ function buildAdapter(
   cfg: ConsoleChannelCfg | FileChannelCfg | SentryChannelCfg | NewRelicChannelCfg,
   globalLevel?: LogLevel
 ) {
-  const level = (cfg.level || globalLevel || "info") as LogLevel;
+  const level = (cfg.level || globalLevel || 'info') as LogLevel;
   switch (name) {
-    case "console":
+    case 'console':
       return new ConsoleAdapter(level);
-    case "file":
+    case 'file':
       return new FileAdapter(level, (cfg as FileChannelCfg).path);
-    case "sentry":
-      return new SentryAdapter((cfg.level as LogLevel) || ("error" as LogLevel), cfg as SentryChannelCfg);
-    case "newrelic":
-      return new NewRelicAdapter((cfg.level as LogLevel) || ("error" as LogLevel), cfg as NewRelicChannelCfg);
+    case 'sentry':
+      return new SentryAdapter(
+        (cfg.level as LogLevel) || ('error' as LogLevel),
+        cfg as SentryChannelCfg
+      );
+    case 'newrelic':
+      return new NewRelicAdapter(
+        (cfg.level as LogLevel) || ('error' as LogLevel),
+        cfg as NewRelicChannelCfg
+      );
     default:
       return new ConsoleAdapter(level);
   }
 }
 
-export function createLogger(config: LoggingConfig = logging as LoggingConfig, name?: ChannelName): Logger {
+export function createLogger(
+  config: LoggingConfig = logging as LoggingConfig,
+  name?: ChannelName
+): Logger {
   const cfg = config || (logging as LoggingConfig);
-  const defaultChannelName = (name || cfg.default || "console") as ChannelName;
+  const defaultChannelName = (name || cfg.default || 'console') as ChannelName;
   const adapters: Array<{ log: (l: LogLevel, m: string | Error, c?: any) => void }> = [];
 
   // Add enabled channels; if none enabled, add default; if still none, fallback to console
@@ -167,7 +212,7 @@ export function createLogger(config: LoggingConfig = logging as LoggingConfig, n
     if (defCfg) {
       adapters.push(buildAdapter(defaultChannelName, defCfg as any, cfg.level));
     } else {
-      adapters.push(new ConsoleAdapter((cfg.level as LogLevel) || "info"));
+      adapters.push(new ConsoleAdapter((cfg.level as LogLevel) || 'info'));
     }
   }
 
@@ -178,16 +223,16 @@ export function createLogger(config: LoggingConfig = logging as LoggingConfig, n
   };
 
   const api: Logger = {
-    debug: (m, ctx) => base.log("debug", m, ctx),
-    info: (m, ctx) => base.log("info", m, ctx),
-    warn: (m, ctx) => base.log("warn", m, ctx),
-    error: (m, ctx) => base.log("error", m, ctx),
+    debug: (m, ctx) => base.log('debug', m, ctx),
+    info: (m, ctx) => base.log('info', m, ctx),
+    warn: (m, ctx) => base.log('warn', m, ctx),
+    error: (m, ctx) => base.log('error', m, ctx),
     withContext(context) {
       return {
-        debug: (m, c) => base.log("debug", m, { ...context, ...c }),
-        info: (m, c) => base.log("info", m, { ...context, ...c }),
-        warn: (m, c) => base.log("warn", m, { ...context, ...c }),
-        error: (m, c) => base.log("error", m, { ...context, ...c }),
+        debug: (m, c) => base.log('debug', m, { ...context, ...c }),
+        info: (m, c) => base.log('info', m, { ...context, ...c }),
+        warn: (m, c) => base.log('warn', m, { ...context, ...c }),
+        error: (m, c) => base.log('error', m, { ...context, ...c }),
       } as Logger;
     },
   };

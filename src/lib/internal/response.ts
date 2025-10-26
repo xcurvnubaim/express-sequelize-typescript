@@ -9,7 +9,11 @@ export interface ApiResponse<T> {
   error: StackFrame[] | null;
 }
 
-export const successResponse = <T>(message: string, data?: T, meta?: Record<string, unknown>): ApiResponse<T> => {
+export const successResponse = <T>(
+  message: string,
+  data?: T,
+  meta?: Record<string, unknown>
+): ApiResponse<T> => {
   return {
     success: true,
     message,
@@ -20,7 +24,7 @@ export const successResponse = <T>(message: string, data?: T, meta?: Record<stri
 };
 
 export const errorResponse = (message: string, error: ApiErrorClass | null): ApiResponse<null> => {
-  const includeFramesDefault = process.env.NODE_ENV !== "production";
+  const includeFramesDefault = process.env.NODE_ENV !== 'production';
   return {
     success: false,
     message,

@@ -1,7 +1,7 @@
-import { container } from "tsyringe";
-import type { Logger } from "../app/logger";
-import { getStackFrames, type StackFrame } from "./stack-utils";
-import { TOKENS } from "../app/di-tokens";
+import { container } from 'tsyringe';
+import type { Logger } from '../internal/logger';
+import { getStackFrames, type StackFrame } from './stack-utils';
+import { TOKENS } from '../internal/di-tokens';
 
 export interface ApiErrorJson {
   statusCode: number;
@@ -27,7 +27,7 @@ export class ApiErrorClass extends Error {
     }
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.logger = container.resolve<Logger>(TOKENS.Logger);
     this.statusCode = statusCode;
     Object.setPrototypeOf(this, new.target.prototype);
@@ -37,15 +37,15 @@ export class ApiErrorClass extends Error {
       Error.captureStackTrace(this, ApiErrorClass);
     }
     this._stackFrames = getStackFrames(this, {
-      trimThisConstructor: ApiErrorClass,
+      trimThisConstructor: ApiErrorClass as unknown as new (...args: unknown[]) => unknown,
       includeNodeInternals: false,
       includeNodeModules: true,
       ...(opts?.stackOptions ?? {}),
     });
 
     // optional non-enumerable hints for logs
-    if (opts?.code) defineHidden(this, "code", opts.code);
-    if (opts?.context) defineHidden(this, "context", opts.context);
+    if (opts?.code) defineHidden(this, 'code', opts.code);
+    if (opts?.context) defineHidden(this, 'context', opts.context);
 
     // DO NOT merge `cause` into JSON; if you want to add cause info to logs,
     // do it in your logger (not here). We intentionally don't persist it.
@@ -57,7 +57,7 @@ export class ApiErrorClass extends Error {
   }
 
   // Minimal JSON: no raw stack string; only structured frames
-  toJSON(includeFrames = process.env.NODE_ENV !== "production"): ApiErrorJson {
+  toJSON(includeFrames = process.env.NODE_ENV !== 'production'): ApiErrorJson {
     const out: ApiErrorJson = {
       statusCode: this.statusCode,
       message: this.message,
@@ -75,11 +75,10 @@ export class ApiErrorClass extends Error {
   ): ApiErrorClass {
     if (err instanceof ApiErrorClass) return err;
     const base =
-      err instanceof Error
-        ? err
-        : new Error(typeof err === "string" ? err : JSON.stringify(err));
+      err instanceof Error ? err : new Error(typeof err === 'string' ? err : JSON.stringify(err));
     return new ApiErrorClass(
-      overrideMsg ?? base.message ?? "Internal Server Error",
+      overrideMsg ?? base.message ?? 'Internal Server Error',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (err as any)?.statusCode ?? fallbackStatus,
       { stackOptions }
     );
