@@ -18,7 +18,7 @@ import type { Storage } from '../../lib/storage';
 export class PostService extends BaseService {
   constructor(
     @inject(TOKENS.PostRepository) private postRepository: PostRepository,
-    @inject(TOKENS.Storage) private storage: Storage
+    @inject(TOKENS.StoragePost) private storage: Storage
   ) {
     super();
   }

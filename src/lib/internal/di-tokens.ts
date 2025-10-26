@@ -13,5 +13,10 @@ export const TOKENS = {
   UserController: Symbol.for('UserController'),
   PostController: Symbol.for('PostController'),
   Logger: Symbol.for('Logger'),
-  Storage: Symbol.for('Storage'),
+
+  // Storage tokens - support multiple storage instances
+  Storage: Symbol.for('Storage'), // Default storage
+  StorageUser: Symbol.for('StorageUser'), // For user-related uploads
+  StoragePost: Symbol.for('StoragePost'), // For post attachments
+  StorageDocument: Symbol.for('StorageDocument'), // For documents/files
 } as const;

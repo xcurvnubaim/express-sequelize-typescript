@@ -8,11 +8,10 @@ import { createPostRoutes } from './routes/posts.route';
 import { globalErrorHandler, notFoundHandler } from './lib/errors/errorHandler';
 import type { Logger } from './lib/internal/logger';
 
-initializeContainer();
+// Initialize DI container (now handles storage initialization internally)
+await initializeContainer();
 const logger = container.resolve<Logger>(TOKENS.Logger);
 logger.info('App starting', { env: process.env.APP_ENV || 'development' });
-
-// Initialize the DI container
 logger.info('Dependency injection container initialized');
 
 // Create Express app

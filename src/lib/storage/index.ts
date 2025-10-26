@@ -37,9 +37,9 @@ class StorageService {
     return StorageService.instance;
   }
 
-  public async initialize(options?: StorageFactoryOptions): Promise<void> {
+  public async initialize(options?: StorageFactoryOptions): Promise<StorageService> {
     if (this.isInitialized) {
-      return; // Already initialized
+      return this; // Already initialized
     }
 
     const storageOptions: StorageFactoryOptions = options || this.getDefaultOptions();
@@ -47,6 +47,8 @@ class StorageService {
     this.storage = createStorage(storageOptions);
     await this.storage.ensureReady();
     this.isInitialized = true;
+
+    return this;
   }
 
   public getStorage(): Storage {
@@ -90,3 +92,20 @@ class StorageService {
 }
 
 export const storageService = StorageService.getInstance();
+
+/**
+ * Factory function to create named storage instances for dependency injection
+ * This allows multiple storage configurations (e.g., user uploads, posts, documents)
+ */
+export async function createStorageInstance(options?: StorageFactoryOptions): Promise<Storage> {
+  const storageOptions: StorageFactoryOptions =
+    options ||
+    ({
+      kind: storageConfig.type === 's3' ? 's3' : 'local',
+      ...(storageConfig.type === 's3' ? storageConfig.s3 : storageConfig.local),
+    } as StorageFactoryOptions);
+
+  const instance = createStorage(storageOptions);
+  await instance.ensureReady();
+  return instance;
+}
